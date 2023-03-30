@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
+    <title>Выполнение LU разложения матрицы</title>
+  </head>
+  <body class="text-center">
+    <h1>Выполнение LU разложения матрицы</h1>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>
+
+    <script type="text/javascript">
+        function createMatrix(tagId, matrix, title)
+        {
+            var parent = document.getElementById(tagId)
+            var result = '';
+
+            for (var i=0; i < matrix.length; i++) {
+                var tmp_result = '';
+                for (var j=0; j < matrix[i].length; j++) {
+                    var value = typeof matrix[i][j] === 'number' ? matrix[i][j] : 'NaN'
+                    tmp_result += '<td>' + value + '</td>'
+                }
+                result += '<tr>' + tmp_result + '</tr>'
+            }
+
+            title = '<h5>' + title +'</h5>'
+
+            parent.innerHTML = title + '<table class="table"><tbody>' + result + '</tbody></table>'
+        }
+
+        async function forSubmit()
+        {
+            const input_matrix = document.getElementById("matrix").value
+            const matrix_value = eval(input_matrix)
+
+            const obj = {matrix: matrix_value}
+            const request = new Request(
+                '/api/lu',
+                {
+                    method: 'POST',
+                    body: JSON.stringify(obj),
+                    headers: {'Content-Type': 'application/json'}
+                }
+            )
+
+            const response = await fetch(request)
+            const status_code = await response.status
+            const body = await response.json()
+
+            var error_field = document.getElementById("error_msg")
+
+            var result = document.getElementById("result")
+            
+            if (status_code == 200) {
+                error_field.value = ""
+
+                createMatrix("L", body.L, "Нижнетреугольная матрица<br>с еденичной диагональю")
+                createMatrix("U", body.U, "Верхнетреугольная матрица")
+                // createMatrix("P", body.P, "")
+                result.style.visibility = "visible"
+            } else {
+                error_field.innerHTML = JSON.stringify(body)
+                result.style.visibility = "hidden"
+            }
+        }
+    </script>
+
+    <div class="container col-3">
+        <div>
+            <div class="col-auto">
+                <textarea type="text" id="matrix" placeholder="Введите исходную матрицу в формате [[1,2,3],[1,2,3],[1,2,3]]"></textarea>
+            </div>
+            <label id="error_msg" class="text-danger">
+            </label>
+            <div class="col-auto">
+                <button class="btn btn-primary mb-3" onclick="forSubmit()">
+                    Разложить матрицу
+                </button>
+            </div>
+        </div>
+        <div id="result" style="visibility: hidden;">
+            <label id="L" class="row"></label>
+            <label id="U" class="row"></label>
+            <label id="P" class="row"></label>
+        </div>
+    </div>
+  </body>
+</html>
